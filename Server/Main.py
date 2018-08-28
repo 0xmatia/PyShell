@@ -22,7 +22,9 @@ def main():
             # ask for command:
             command = input()
             client_socket.sendall(command.encode())
-            print(client_socket.recv(1024).decode(), end="")  # print command output
+            command_output = client_socket.recv(1024).decode()
+            if command_output != "don't_display":
+                print(command_output, end="")  # print command output
     except KeyboardInterrupt:
         print("Keyboard Interrupted, exiting now.")
         client_socket.close()
